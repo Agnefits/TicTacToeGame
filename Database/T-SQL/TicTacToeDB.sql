@@ -1,0 +1,30 @@
+CREATE DATABASE TicTacToeDB;
+GO
+USE TicTacToeDB;
+GO
+CREATE TABLE Players (
+    Id INT IDENTITY(1,1) PRIMARY KEY,
+    Alias NVARCHAR(50) NOT NULL,
+    Type NVARCHAR(20) NOT NULL,
+    Mark CHAR(1) NOT NULL
+);
+
+CREATE TABLE Games (
+    Id INT IDENTITY(1,1) PRIMARY KEY,
+    Player1Id INT NOT NULL,
+    Player2Id INT NOT NULL,
+    CurrentPlayerId INT NOT NULL,
+    Status NVARCHAR(20) NOT NULL,
+    FOREIGN KEY (Player1Id) REFERENCES Players(Id),
+    FOREIGN KEY (Player2Id) REFERENCES Players(Id),
+    FOREIGN KEY (CurrentPlayerId) REFERENCES Players(Id)
+);
+
+CREATE TABLE GameTuts (
+    Id INT IDENTITY(1,1) PRIMARY KEY,
+    GameId INT NOT NULL,
+    RowIndex INT NOT NULL,
+    ColumnIndex INT NOT NULL,
+    Symbol CHAR(1) NOT NULL DEFAULT ' ',
+    FOREIGN KEY (GameId) REFERENCES Games(Id)
+);
