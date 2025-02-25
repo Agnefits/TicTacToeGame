@@ -1,0 +1,191 @@
+﻿@model TicTacToe_Game.Models.Game
+
+@{
+    ViewBag.Title = "Play Game";
+}
+
+@Styles.Render("~/Styles/style.css")
+
+<header class="active">
+    <a href="@Url.Action("Index", "Game")">
+        <svg width="72" height="32" xmlns="http://www.w3.org/2000/svg">
+            <g fill="none" fill-rule="evenodd">
+                <path d="M8.562 1.634 16 9.073l7.438-7.439a3 3 0 0 1 4.243 0l2.685 2.685a3 3 0 0 1 0 4.243L22.927 16l7.439 7.438a3 3 0 0 1 0 4.243l-2.685 2.685a3 3 0 0 1-4.243 0L16 22.927l-7.438 7.439a3 3 0 0 1-4.243 0L1.634 27.68a3 3 0 0 1 0-4.243L9.073 16 1.634 8.562a3 3 0 0 1 0-4.243L4.32 1.634a3 3 0 0 1 4.243 0Z"
+                      fill="#31C3BD" />
+                <path d="M56.1 0c8.765 0 15.87 7.106 15.87 15.87 0 8.766-7.105 15.871-15.87 15.871-8.765 0-15.87-7.105-15.87-15.87C40.23 7.106 47.334 0 56.1 0Zm0 9.405a6.466 6.466 0 1 0 0 12.931 6.466 6.466 0 0 0 0-12.931Z"
+                      fill="#F2B137"
+                      fill-rule="nonzero" />
+            </g>
+        </svg>
+    </a>
+    <div class="player__turn--bar">
+        @if (Model?.CurrentPlayer?.Mark == 'X')
+        {
+            <div class="player__turn" style="background-image: url('@Url.Content("~/assets/icon-x.svg")');"></div>
+        }
+        else
+        {
+            <div class="player__turn" style="background-image: url('@Url.Content("~/assets/icon-o.svg")');"></div>
+        }
+        <span class="uppercase heading--XS">turn</span>
+    </div>
+    <button id="btn--replay" class="btn btn--white" onclick="playAgain()">
+        <svg width="20" height="20" xmlns="http://www.w3.org/2000/svg">
+            <path d="M19.524 0h-1.88a.476.476 0 0 0-.476.499l.159 3.284A9.81 9.81 0 0 0 9.835.317C4.415.317-.004 4.743 0 10.167.004 15.597 4.406 20 9.835 20a9.796 9.796 0 0 0 6.59-2.536.476.476 0 0 0 .019-.692l-1.348-1.349a.476.476 0 0 0-.65-.022 6.976 6.976 0 0 1-9.85-.63 6.987 6.987 0 0 1 .63-9.857 6.976 6.976 0 0 1 10.403 1.348l-4.027-.193a.476.476 0 0 0-.498.476v1.881c0 .263.213.476.476.476h7.944A.476.476 0 0 0 20 8.426V.476A.476.476 0 0 0 19.524 0Z"
+                  fill="#1F3641" />
+        </svg>
+    </button>
+</header>
+<div class="overlay @(Model.Status != TicTacToe_Game.Models.GameStatus.Running ? "active" : "")">
+    <div class="status__bar">
+        <div class="status__bar--content">
+            <strong id="winner--message" class="uppercase heading--XS">
+                @(Model.Status == TicTacToe_Game.Models.GameStatus.Draw
+                    ? "Round Draw"
+                    : Model.Status == TicTacToe_Game.Models.GameStatus.Player1Won
+                        ? Model.Player1.Alias + " Won!!"
+                        : Model.Player2.Alias + " Won!!")
+            </strong>
+            <div class="winning--mark__wrapper">
+                @if (Model.Status != TicTacToe_Game.Models.GameStatus.Draw)
+                {
+                    <img src="~/assets/icon-@((Model.Status == TicTacToe_Game.Models.GameStatus.Player1Won) ? Model.Player1.Mark : Model.Player2.Mark).svg"
+                         alt="winning mark">
+                    <strong id="round--taker__content" class="uppercase heading--L">TAKES THE ROUND</strong>
+                }
+            </div>
+        </div>
+        <div class="btn__wrapper">
+            <button id="btn--quit" class="btn btn--white" onclick="location.href='@Url.Action("Index", "Game")'">
+                Quit
+            </button>
+            <button id="btn--nextRound" class="btn btn--yellow" onclick="playAgain()">
+                Next Round
+            </button>
+        </div>
+    </div>
+</div>
+
+<main>
+    <div class="game__arena">
+        @for (int row = 0; row < 3; row++)
+        {
+            for (int col = 0; col < 3; col++)
+            {
+                var currentCell = Model.gameTuts?.Where(tut => tut.Row == row && tut.Column == col).SingleOrDefault();
+                bool isDisabled = currentCell != null && (currentCell.Symbol == 'X' || currentCell.Symbol == 'O');
+                string symbol = currentCell?.Symbol.ToString() ?? "";
+
+                <button class="btn game--block"
+                        data-row="@row"
+                        data-col="@col"
+                        @(isDisabled ? "disabled" : "")>
+
+                    @if (symbol == "X")
+                    {
+                        <img src="@Url.Content("~/assets/icon-x.svg")" alt="X">
+                    }
+                    else if (symbol == "O")
+                    {
+                        <img src="@Url.Content("~/assets/icon-o.svg")" alt="O">
+                    }
+                </button>
+            }
+        }
+    </div>
+
+    <div class="score--board">
+        <div class="score--block @(Model.Player1.Mark=='X'? "block--green" : "block--yellow") font--body">
+            <span id="board-@Model.Player1.Mark.ToString().ToLower()" class="uppercase">@Model.Player1.Alias (@Model.Player1.Mark)</span>
+            <strong id="score-@Model.Player1.Mark.ToString().ToLower()" class="heading--M">@Model.Player1.Score</strong>
+        </div>
+        <div class="score--block block--white font--body">
+            <span id="board-tie" class="uppercase">Draw</span>
+            <strong id="score-tie" class="heading--M">@Model.Player1.Draw</strong>
+        </div>
+        <div class="score--block @(Model.Player2.Mark=='X'? "block--green" : "block--yellow") font--body">
+            <span id="board-@Model.Player2.Mark.ToString().ToLower()" class="uppercase">@Model.Player2.Alias (@Model.Player2.Mark)</span>
+            <strong id="score-@Model.Player2.Mark.ToString().ToLower()" class="heading--M">@Model.Player2.Score</strong>
+        </div>
+    </div>
+
+    @if (Model.Status != TicTacToe_Game.Models.GameStatus.Running)
+    {
+        <div class="overlay">
+            <div class="status__bar">
+                <div class="status__bar--content">
+                    <strong class="uppercase heading--XS">
+                        @if (Model.Status == TicTacToe_Game.Models.GameStatus.Draw)
+                        {
+                            <text>It's a Drwa!</text>
+                        }
+                        else
+                        {
+                            <text>@Model.CurrentPlayer.Alias wins!</text>
+                        }
+                    </strong>
+                </div>
+                <div class="btn__wrapper">
+                    <button class="btn btn--white" onclick="location.href='@Url.Action("Index", "Game")'">
+                        Quit
+                    </button>
+                    <button class="btn btn--yellow" onclick="location.href='playAgain()'">
+                        Play Again
+                    </button>
+                </div>
+            </div>
+        </div>
+    }
+</main>
+
+<script>
+    function makeMove(gameId, row, col) {
+        window.location.href = '@Url.Action("MakeMove", "Game")' + '?gameId=' + gameId + '&row=' + row + '&col=' + col;
+    }
+
+    document.querySelectorAll(".game--block").forEach(button => {
+        button.addEventListener("click", function (e) {
+        let row = this.getAttribute("data-row");
+        let col = this.getAttribute("data-col");
+
+        fetch('/Game/MakeMove', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                gameId: @Model.Id,
+                row: parseInt(row),
+                col: parseInt(col),
+                symbol: '@Model.CurrentPlayer.Mark'
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload(); // Refresh game state
+            } else {
+                alert(data.message);
+            }
+        })
+        .catch(error => console.error('Error:', error));
+    });
+});
+
+    function playAgain() {
+        let url = '@Url.Action("PlayAgain", "Game")';
+
+        fetch(url, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ player1Id: @Model.Player1.Id, player2Id: @Model.Player2.Id, xPlayerId: @(Model.Player1.Mark=='X'? Model.Player1.Id : Model.Player2.Id) })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                window.location.href = '@Url.Action("Play", "Game")' + '?gameId=' + data.gameId;
+            } else {
+                alert("Error starting game.");
+            }
+        })
+        .catch(error => console.error("Error:", error));
+    }
+</script>
